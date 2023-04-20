@@ -1,14 +1,15 @@
 mod token_type;
 
-mod token;
-mod scanner;
 mod error;
+mod scanner;
+mod token;
 
-use scanner::*;
 use error::*;
+use scanner::*;
+use core::prelude;
 use std::{
     env::args,
-    io::{self, BufRead},
+    io::{self, stdout, BufRead, Write},
 };
 fn main() {
     let args: Vec<String> = args().collect();
@@ -35,31 +36,27 @@ fn run_file(path: &str) -> io::Result<()> {
 }
 fn run_prompt() {
     let stdin = io::stdin();
-    loop {
-        for line in stdin.lock().lines() {
-            println!("> ");
-            let mut line = String::new();
-            match io::stdin().read_line(&mut line) {
-                Ok(_) => {}
-                Err(error) => {
-                    eprintln!("error: {}", error);
-                    break;
-                }
-            }
+    stdout().flush();
+
+    println!("> ");
+    for line in stdin.lock().lines() {
+        if let Ok(line) = line {
             if line.is_empty() {
                 break;
             }
             match run(line) {
-                Ok(_) => {}
-                Err(error) => {
-                    error.report("".to_string());    
+                Ok(_) => {},
+                Err(_) => {
+                    // ignore, already reported
                 }
-            }
+            } 
+        } else {
+            break;
         }
+        println!("> ");
+        stdout().flush(); 
     }
 }
-
-
 
 fn run(source: String) -> Result<(), LoxError> {
     let mut scanner = Scanner::new(source);
@@ -70,4 +67,3 @@ fn run(source: String) -> Result<(), LoxError> {
     }
     Ok(())
 }
-

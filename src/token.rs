@@ -2,20 +2,20 @@ use crate::token_type::*;
 use std::fmt;
 
 #[derive(Debug)]
-pub enum Object {
+pub enum Literal {
     Nil,
     Bool(bool),
     Number(f64),
     String(String),
 }
 
-impl fmt::Display for Object {
+impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Object::Nil => write!(f, "nil"),
-            Object::Bool(b) => write!(f, "{}", b),
-            Object::Number(n) => write!(f, "{}", n),
-            Object::String(s) => write!(f, "{}", s),
+            Literal::Nil => write!(f, "nil"),
+            Literal::Bool(b) => write!(f, "{}", b),
+            Literal::Number(n) => write!(f, "{}", n),
+            Literal::String(s) => write!(f, "{}", s),
         }
     }
 }
@@ -24,7 +24,7 @@ impl fmt::Display for Object {
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Option<Object>,
+    pub literal: Option<Literal>,
     pub line: usize,
 }
 
@@ -32,7 +32,7 @@ impl Token {
     pub fn new(
         token_type: TokenType,
         lexeme: String,
-        literal: Option<Object>,
+        literal: Option<Literal>,
         line: usize,
     ) -> Token {
         Token {
