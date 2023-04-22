@@ -1,17 +1,54 @@
 mod token_type;
+use token_type::*;
 
 mod error;
 mod scanner;
 mod token;
+use token::*;
+mod expr;
+use expr::*;
+mod ast_printer;
+mod generate_ast;
 
 use error::*;
 use scanner::*;
-use core::prelude;
 use std::{
     env::args,
     io::{self, stdout, BufRead, Write},
 };
 fn main() {
+    // // test pretty printing
+    // let expression = Expr::Binary(BinaryExpr {
+    //     left: Box::new(Expr::Unary(UnaryExpr {
+    //         operator: Token {
+    //             token_type: TokenType::Minus,
+    //             lexeme: "-".to_string(),
+    //             literal: None,
+    //             line: 1,
+    //         },
+    //         right: Box::new(Expr::Literal(LiteralExpr {
+    //             value: Some(Literal::Number(123.0)),
+    //         })),
+    //     })),
+    //     operator: Token {
+    //         token_type: TokenType::Star,
+    //         lexeme: "*".to_string(),
+    //         literal: None,
+    //         line: 1,
+    //     },
+    //     right: Box::new(Expr::Grouping(GroupingExpr {
+    //         expression: Box::new(Expr::Literal(LiteralExpr {
+    //             value: Some(Literal::Number(45.67)),
+    //         })),
+    //     })),
+    // });
+    // let printer = ast_printer::AstPrinter;
+    // println!("{}", printer.print(&expression).unwrap());
+    // return;
+    
+    generate_ast::generate_ast(&"src".to_string());
+    return;
+
     let args: Vec<String> = args().collect();
     if args.len() > 2 {
         println!("Usage: lox-ast [script]");

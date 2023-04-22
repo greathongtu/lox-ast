@@ -8,23 +8,24 @@ pub enum Expr {
     Unary(UnaryExpr),
 }
 
+
 pub struct BinaryExpr {
-    left: Box<Expr>,
-    operator: Token,
-    right: Box<Expr>,
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
 }
 
 pub struct GroupingExpr {
-    expression: Box<Expr>,
+    pub expression: Box<Expr>,
 }
 
 pub struct LiteralExpr {
-    value: Option<Literal>,
+    pub value: Option<Literal>,
 }
 
 pub struct UnaryExpr {
-    operator: Token,
-    right: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
 }
 
 pub trait ExprVisitor<T> {
@@ -35,7 +36,7 @@ pub trait ExprVisitor<T> {
 }
 
 impl Expr {
-    pub fn accept<T>(&self, visitor: &mut impl ExprVisitor<T>) -> Result<T, LoxError> {
+    pub fn accept<T>(&self, visitor: &impl ExprVisitor<T>) -> Result<T, LoxError> {
         match self {
             Expr::Binary(expr) => visitor.visit_binary_expr(expr),
             Expr::Grouping(expr) => visitor.visit_grouping_expr(expr),

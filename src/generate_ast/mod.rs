@@ -1,4 +1,3 @@
-use std::env::args;
 use std::fs::File;
 use std::io::{self, Write};
 
@@ -9,7 +8,7 @@ struct TreeType {
     fields: Vec<String>,
 }
 
-fn generate_ast(output_dir: String) -> io::Result<()> {
+pub fn generate_ast(output_dir: &String) -> io::Result<()> {
 
     define_ast(
         output_dir,
@@ -57,7 +56,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     for t in &tree_types {
         write!(file, "pub struct {} {{\n", t.class_name)?;
         for f in &t.fields {
-            write!(file, "    {},\n", f)?;
+            write!(file, "    pub {},\n", f)?;
         }
         write!(file, "}}\n\n")?;
     }
@@ -84,7 +83,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     //     }
     // }
     write!(file, "impl {base_name} {{\n", base_name = base_name)?;
-    write!(file, "    pub fn accept<T>(&self, visitor: &mut impl ExprVisitor<T>) -> Result<T, LoxError> {{\n")?;
+    write!(file, "    pub fn accept<T>(&self, visitor: &impl ExprVisitor<T>) -> Result<T, LoxError> {{\n")?;
     write!(file, "        match self {{\n")?;
     for t in &tree_types {
         write!(
