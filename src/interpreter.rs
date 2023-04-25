@@ -98,6 +98,19 @@ impl Interpreter {
     fn is_truthy(&self, literal: &Literal) -> bool {
         !matches!(literal, Literal::Nil | Literal::Bool(false))
     }
+
+    pub fn interpret(&self, expr: &Expr) -> bool {
+        match self.evaluate(&expr) {
+            Ok(v) => {
+                println!("{}", v);
+                true
+            }
+            Err(e) => {
+                e.report("");
+                false
+            }
+        }
+    }
 }
 
 #[cfg(test)]

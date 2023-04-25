@@ -1,5 +1,5 @@
-mod token_type;
 mod Literal;
+mod token_type;
 use ast_printer::AstPrinter;
 
 mod ast_printer;
@@ -7,6 +7,7 @@ mod error;
 mod expr;
 mod generate_ast;
 mod interpreter;
+use interpreter::*;
 mod literal;
 mod scanner;
 mod token;
@@ -51,67 +52,79 @@ fn main() {
     // return;
 
     let args: Vec<String> = args().collect();
-    if args.len() > 2 {
-        println!("Usage: lox-ast [script]");
-        std::process::exit(64);
-    } else if args.len() == 2 {
-        run_file(&args[1]).expect("Could not run file");
-    } else {
-        run_prompt();
+    let lox = Lox::new();
+    match args.len() {
+        1 => lox.run_prompt(),
+        2 => lox.run_file(&args[1]).expect("Could not run file"),
+        _ => {
+            println!("Usage: lox-ast [script]");
+            std::process::exit(64);
+        }
     }
 }
 
-fn run_file(path: &str) -> io::Result<()> {
-    let buf = std::fs::read_to_string(path)?;
-    match run(buf) {
-        Ok(_) => {}
-        Err(m) => {
-            m.report("");
+struct Lox {
+    interpreter: Interpreter,
+}
+
+impl Lox {
+    pub fn new() -> Lox {
+        Lox {
+            interpreter: Interpreter {},
+        }
+    }
+
+    fn run_file(&self, path: &str) -> io::Result<()> {
+        let buf = std::fs::read_to_string(path)?;
+        if self.run(buf).is_err() {
+            // Ignore: error was already reported
             std::process::exit(65);
         }
+        Ok(())
     }
-    Ok(())
-}
-fn run_prompt() {
-    let stdin = io::stdin();
-    print!("> ");
-    stdout().flush();
+    fn run_prompt(&self) {
+        let stdin = io::stdin();
+        print!("> ");
+        let _ = stdout().flush();
 
-    for line in stdin.lock().lines() {
-        if let Ok(line) = line {
-            if line.is_empty() {
+        for line in stdin.lock().lines() {
+            if let Ok(line) = line {
+                if line.is_empty() {
+                    break;
+                }
+                match self.run(line) {
+                    Ok(_) => {}
+                    Err(_) => {
+                        // ignore, already reported
+                    }
+                }
+            } else {
                 break;
             }
-            match run(line) {
-                Ok(_) => {}
-                Err(_) => {
-                    // ignore, already reported
-                }
+            print!("> ");
+            let _ = stdout().flush();
+        }
+    }
+
+    fn run(&self, source: String) -> Result<(), LoxError> {
+        let mut scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens()?;
+
+        // for token in tokens {
+        //     println!("{:?}", token);
+        // }
+        // Ok(())
+
+        let mut parser = Parser::new(tokens);
+        match parser.parse() {
+            None => {}
+            Some(expr) => {
+                // let printer = AstPrinter {};
+                // println!("AST Printer:\n{}", printer.print(&expr)?);
+
+                self.interpreter.interpret(&expr);
             }
-        } else {
-            break;
         }
-        print!("> ");
-        stdout().flush();
+        Ok(())
     }
-}
-
-fn run(source: String) -> Result<(), LoxError> {
-    let mut scanner = Scanner::new(source);
-    let tokens = scanner.scan_tokens()?;
-
-    // for token in tokens {
-    //     println!("{:?}", token);
-    // }
-    // Ok(())
-
-    let mut parser = Parser::new(tokens);
-    match parser.parse() {
-        None => {}
-        Some(expr) => {
-            let printer = AstPrinter {};
-            println!("AST Printer:\n{}", printer.print(&expr)?);
-        }
-    }
-    Ok(())
 }
