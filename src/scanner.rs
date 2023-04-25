@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::error::LoxError;
 use crate::token::*;
 use crate::token_type::*;
+use crate::literal::Literal;
 
 pub struct Scanner {
     source: String,

@@ -1,5 +1,6 @@
 use crate::token::*;
 use crate::error::*;
+use crate::literal::*;
 
 pub enum Expr {
     Binary(BinaryExpr),

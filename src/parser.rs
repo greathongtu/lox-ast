@@ -2,6 +2,7 @@ use crate::error::*;
 use crate::expr::*;
 use crate::token::*;
 use crate::token_type::*;
+use crate::literal::Literal;
 
 pub struct Parser<'a> {
     tokens: &'a [Token],

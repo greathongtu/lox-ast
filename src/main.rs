@@ -1,13 +1,11 @@
 mod token_type;
 use ast_printer::AstPrinter;
-use token_type::*;
 
 mod error;
 mod scanner;
 mod token;
-use token::*;
 mod expr;
-use expr::*;
+mod literal;
 mod ast_printer;
 mod generate_ast;
 
