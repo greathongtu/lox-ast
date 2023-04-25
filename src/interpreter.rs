@@ -36,7 +36,10 @@ impl ExprVisitor<Literal> for Interpreter {
         };
 
         if result == Literal::ArithmeticError {
-            Err(LoxError::error(expr.operator.line, "Illegal expression"))
+            Err(LoxError::runtime_error(
+                &expr.operator,
+                "Illegal expression",
+            ))
         } else {
             Ok(result)
         }
