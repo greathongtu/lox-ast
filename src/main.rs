@@ -5,6 +5,7 @@ mod error;
 mod scanner;
 mod token;
 mod expr;
+mod interpreter;
 mod literal;
 mod ast_printer;
 mod generate_ast;
