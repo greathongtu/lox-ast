@@ -35,6 +35,14 @@ impl ExprVisitor<Literal> for Interpreter {
                     todo!("need to work on your code dude");
                 }
             },
+            (Literal::Number(left), Literal::String(right)) => match op {
+                TokenType::Plus => Literal::String(format!("{left}{right}")),
+                _ => Literal::ArithmeticError,
+            },
+            (Literal::String(left), Literal::Number(right)) => match op {
+                TokenType::Plus => Literal::String(format!("{left}{right}")),
+                _ => Literal::ArithmeticError,
+            },
             (Literal::String(left), Literal::String(right)) => match op {
                 TokenType::Plus => Literal::String(format!("{left}{right}")),
                 TokenType::BangEqual => Literal::Bool(left != right),
