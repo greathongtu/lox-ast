@@ -1,7 +1,7 @@
 use crate::token_type::*;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Literal {
     Nil,
     Bool(bool),
@@ -40,6 +40,27 @@ impl Token {
             lexeme,
             literal,
             line,
+        }
+    }
+
+    pub fn is(&self, ttype: TokenType) -> bool {
+        self.token_type == ttype
+    }
+
+    pub fn token_type(&self) -> TokenType {
+        self.token_type
+    }
+
+    pub fn as_string(&self) -> &String {
+        &self.lexeme
+    }
+
+    pub fn dup(&self) -> Token {
+        Token {
+            token_type: self.token_type,
+            lexeme: self.lexeme.to_string(),
+            literal: self.literal.clone(),
+            line: self.line,
         }
     }
 

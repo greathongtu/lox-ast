@@ -1,4 +1,5 @@
 mod token_type;
+use ast_printer::AstPrinter;
 use token_type::*;
 
 mod error;
@@ -9,6 +10,9 @@ mod expr;
 use expr::*;
 mod ast_printer;
 mod generate_ast;
+
+mod parser;
+use crate::parser::*;
 
 use error::*;
 use scanner::*;
@@ -45,9 +49,6 @@ fn main() {
     // let printer = ast_printer::AstPrinter;
     // println!("{}", printer.print(&expression).unwrap());
     // return;
-    
-    generate_ast::generate_ast(&"src".to_string());
-    return;
 
     let args: Vec<String> = args().collect();
     if args.len() > 2 {
@@ -99,8 +100,18 @@ fn run(source: String) -> Result<(), LoxError> {
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
 
-    for token in tokens {
-        println!("{:?}", token);
+    // for token in tokens {
+    //     println!("{:?}", token);
+    // }
+    // Ok(())
+
+    let mut parser = Parser::new(tokens);
+    match parser.parse() {
+        None => {}
+        Some(expr) => {
+            let printer = AstPrinter {};
+            println!("AST Printer:\n{}", printer.print(&expr)?);
+        }
     }
     Ok(())
 }
