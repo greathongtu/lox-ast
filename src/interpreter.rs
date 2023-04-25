@@ -33,10 +33,7 @@ impl ExprVisitor<Literal> for Interpreter {
                     Ok(Literal::Bool(true))
                 }
             }
-            _ => Err(LoxError::error(
-                0,
-                "Unreachable according to Nystrom".to_string(),
-            )),
+            _ => Err(LoxError::error(0, "Unreachable according to Nystrom")),
         }
     }
 }

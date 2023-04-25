@@ -1,14 +1,14 @@
 mod token_type;
 use ast_printer::AstPrinter;
 
+mod ast_printer;
 mod error;
-mod scanner;
-mod token;
 mod expr;
+mod generate_ast;
 mod interpreter;
 mod literal;
-mod ast_printer;
-mod generate_ast;
+mod scanner;
+mod token;
 
 mod parser;
 use crate::parser::*;
@@ -65,7 +65,7 @@ fn run_file(path: &str) -> io::Result<()> {
     match run(buf) {
         Ok(_) => {}
         Err(m) => {
-            m.report("".to_string());
+            m.report("");
             std::process::exit(65);
         }
     }
@@ -82,16 +82,16 @@ fn run_prompt() {
                 break;
             }
             match run(line) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_) => {
                     // ignore, already reported
                 }
-            } 
+            }
         } else {
             break;
         }
         print!("> ");
-        stdout().flush(); 
+        stdout().flush();
     }
 }
 

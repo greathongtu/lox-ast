@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use crate::error::LoxError;
+use crate::literal::Literal;
 use crate::token::*;
 use crate::token_type::*;
-use crate::literal::Literal;
 
 pub struct Scanner {
     source: String,
@@ -12,7 +12,7 @@ pub struct Scanner {
     current: usize,
     line: usize,
 
-    keywords: HashMap<String, TokenType>
+    keywords: HashMap<String, TokenType>,
 }
 
 impl Scanner {
@@ -42,7 +42,7 @@ impl Scanner {
                 m.insert("var".to_string(), TokenType::Var);
                 m.insert("while".to_string(), TokenType::While);
                 m
-            }
+            },
         }
     }
     pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, LoxError> {
@@ -52,7 +52,7 @@ impl Scanner {
             match self.scan_token() {
                 Ok(_) => {}
                 Err(e) => {
-                    e.report("".to_string());
+                    e.report("");
                     had_error = Some(e);
                 }
             }
@@ -128,17 +128,14 @@ impl Scanner {
             }
             '"' => {
                 self.scan_string();
-            },
+            }
             _ => {
                 if self.is_dight(c) {
                     self.scan_number();
                 } else if self.is_alpha(c) {
                     self.identifier();
                 } else {
-                    return Err(LoxError::error(
-                        self.line,
-                        "Unexpected character.".to_string(),
-                    ));
+                    return Err(LoxError::error(self.line, "Unexpected character."));
                 }
             }
         }
@@ -149,7 +146,7 @@ impl Scanner {
         while self.is_alpha_numeric(self.peek()) {
             self.advance();
         }
-        let text = self.source[self.start .. self.current].to_string();
+        let text = self.source[self.start..self.current].to_string();
         let token_type = (*self.keywords.get(&text).unwrap_or(&TokenType::Identifier)).clone();
         self.add_token(token_type);
     }
@@ -166,12 +163,13 @@ impl Scanner {
             while self.is_dight(self.peek()) {
                 self.advance();
             }
-
         }
-        let number = self.source[self.start .. self.current].parse::<f64>().unwrap();
+        let number = self.source[self.start..self.current]
+            .parse::<f64>()
+            .unwrap();
         self.add_token_object(TokenType::Number, Some(Literal::Number(number)));
         // self.add_token(TokenType::Number);
-    } 
+    }
 
     fn scan_string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
@@ -182,7 +180,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            LoxError::error(self.line, String::from("Unterminated string."));
+            LoxError::error(self.line, "Unterminated string.");
             return;
         }
 
