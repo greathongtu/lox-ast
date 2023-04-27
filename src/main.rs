@@ -8,6 +8,7 @@ mod interpreter;
 use interpreter::*;
 mod literal;
 mod scanner;
+mod stmt;
 mod token;
 
 mod parser;
@@ -114,15 +115,11 @@ impl Lox {
         // Ok(())
 
         let mut parser = Parser::new(tokens);
-        match parser.parse() {
-            None => {}
-            Some(expr) => {
-                // let printer = AstPrinter {};
-                // println!("AST Printer:\n{}", printer.print(&expr)?);
-
-                self.interpreter.interpret(&expr);
-            }
+        let statements = parser.parse()?;
+        if self.interpreter.interpret(&statements) {
+            Ok(())
+        } else {
+            Err(LoxError::error(0, ""))
         }
-        Ok(())
     }
 }
