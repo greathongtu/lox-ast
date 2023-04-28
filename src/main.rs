@@ -1,7 +1,6 @@
 mod token_type;
-use ast_printer::AstPrinter;
 
-mod ast_printer;
+// mod ast_printer;
 mod error;
 mod expr;
 mod interpreter;
@@ -108,11 +107,6 @@ impl Lox {
     fn run(&self, source: String) -> Result<(), LoxError> {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens()?;
-
-        // for token in tokens {
-        //     println!("{:?}", token);
-        // }
-        // Ok(())
 
         let mut parser = Parser::new(tokens);
         let statements = parser.parse()?;

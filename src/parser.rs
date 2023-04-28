@@ -18,13 +18,27 @@ impl<'a> Parser<'a> {
     pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
         let mut statements = Vec::new();
         while !self.is_at_end() {
-            statements.push(self.statement()?);
+            statements.push(self.declaration()?);
         }
         Ok(statements)
     }
 
     fn expression(&mut self) -> Result<Expr, LoxError> {
         self.equality()
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, LoxError> {
+        let result = if self.is_match(&[TokenType::Var]) {
+            self.var_declaration()
+        } else {
+            self.statement()
+        };
+
+        if result.is_err() {
+            self.synchronize();
+        }
+
+        result
     }
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
@@ -37,13 +51,30 @@ impl<'a> Parser<'a> {
 
     pub fn print_statement(&mut self) -> Result<Stmt, LoxError> {
         let value = self.expression()?;
-        self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
+        self.consume(TokenType::SemiColon, "Expect ';' after value.")?;
         Ok(Stmt::Print(PrintStmt { expression: value }))
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, LoxError> {
+        let name = self.consume(TokenType::Identifier, "Expect variable name.")?;
+
+        let initializer = if self.is_match(&[TokenType::Equal]) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        self.consume(
+            TokenType::SemiColon,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::Var(VarStmt { name, initializer }))
     }
 
     pub fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
         let value = self.expression()?;
-        self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
+        self.consume(TokenType::SemiColon, "Expect ';' after value.")?;
         Ok(Stmt::Expression(ExpressionStmt { expression: value }))
     }
 
@@ -121,7 +152,7 @@ impl<'a> Parser<'a> {
                 right: Box::new(right),
             }));
         }
-        Ok(self.primary()?)
+        self.primary()
     }
 
     fn primary(&mut self) -> Result<Expr, LoxError> {
@@ -140,16 +171,20 @@ impl<'a> Parser<'a> {
                 value: Some(Literal::Nil),
             }));
         }
-
         if self.is_match(&[TokenType::Number, TokenType::String]) {
             return Ok(Expr::Literal(LiteralExpr {
                 value: self.previous().literal.clone(),
             }));
         }
+        if self.is_match(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable(VariableExpr { 
+                name: self.previous().dup()
+             }));
+        }
 
         if self.is_match(&[TokenType::LeftParen]) {
             let expr: Expr = self.expression()?;
-            self.consume(TokenType::RightParen, "Expect ')' after expression.");
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
             return Ok(Expr::Grouping(GroupingExpr {
                 expression: Box::new(expr),
             }));
@@ -183,7 +218,7 @@ impl<'a> Parser<'a> {
     fn synchronize(&mut self) {
         self.advance();
         while !self.is_at_end() {
-            if self.previous().is(TokenType::Semicolon) {
+            if self.previous().is(TokenType::SemiColon) {
                 return;
             }
             if matches!(

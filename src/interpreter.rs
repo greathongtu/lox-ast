@@ -17,15 +17,20 @@ impl StmtVisitor<()> for Interpreter {
         println!("{value}");
         Ok(())
     }
+
+    fn visit_var_stmt(&self, _expr: &VarStmt) -> Result<(), LoxError> {
+        todo!()
+    }
 }
 
+// interpreter is a visitor of expressions, an operation
 impl ExprVisitor<Literal> for Interpreter {
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<Literal, LoxError> {
         Ok(expr.value.clone().unwrap())
     }
 
     fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<Literal, LoxError> {
-        Ok(self.evaluate(&expr.expression)?)
+        self.evaluate(&expr.expression)
     }
 
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<Literal, LoxError> {
@@ -108,6 +113,10 @@ impl ExprVisitor<Literal> for Interpreter {
             }
             _ => Err(LoxError::error(0, "Unreachable according to Nystrom")),
         }
+    }
+
+    fn visit_variable_expr(&self, _expr: &VariableExpr) -> Result<Literal, LoxError> {
+        todo!()
     }
 }
 
