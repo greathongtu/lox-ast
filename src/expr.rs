@@ -3,6 +3,7 @@ use crate::token::*;
 use crate::literal::*;
 
 pub enum Expr {
+    Assign(AssignExpr),
     Binary(BinaryExpr),
     Grouping(GroupingExpr),
     Literal(LiteralExpr),
@@ -13,6 +14,7 @@ pub enum Expr {
 impl Expr {
     pub fn accept<T>(&self, expr_visitor: &dyn ExprVisitor<T>) -> Result<T, LoxError> {
         match self {
+            Expr::Assign(v) => v.accept(expr_visitor),
             Expr::Binary(v) => v.accept(expr_visitor),
             Expr::Grouping(v) => v.accept(expr_visitor),
             Expr::Literal(v) => v.accept(expr_visitor),
@@ -20,6 +22,11 @@ impl Expr {
             Expr::Variable(v) => v.accept(expr_visitor),
         }
     }
+}
+
+pub struct AssignExpr {
+    pub name: Token,
+    pub value: Box<Expr>,
 }
 
 pub struct BinaryExpr {
@@ -46,11 +53,18 @@ pub struct VariableExpr {
 }
 
 pub trait ExprVisitor<T> {
+    fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<T, LoxError>;
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<T, LoxError>;
     fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<T, LoxError>;
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<T, LoxError>;
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<T, LoxError>;
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<T, LoxError>;
+}
+
+impl AssignExpr {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, LoxError> {
+        visitor.visit_assign_expr(self)
+    }
 }
 
 impl BinaryExpr {

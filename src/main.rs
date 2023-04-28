@@ -111,7 +111,7 @@ impl Lox {
 
         let mut parser = Parser::new(tokens);
         let statements = parser.parse()?;
-        if self.interpreter.interpret(&statements) {
+        if parser.success() && self.interpreter.interpret(&statements) {
             Ok(())
         } else {
             Err(LoxError::error(0, ""))

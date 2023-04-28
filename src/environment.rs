@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use crate::error::*;
@@ -25,7 +26,18 @@ impl Environment {
             Ok(literal.clone())
         } else {
             Err(LoxError::runtime_error(
-                &name,
+                name,
+                &format!("Undefined variable '{}'.", name.as_string()),
+            ))
+        }
+    }
+    pub fn assign(&mut self, name: &Token, value: Literal) -> Result<(), LoxError> {
+        if let Entry::Occupied(mut object) = self.values.entry(name.as_string().to_string()) {
+            object.insert(value);
+            Ok(())
+        } else {
+            Err(LoxError::runtime_error(
+                name,
                 &format!("Undefined variable '{}'.", name.as_string()),
             ))
         }
@@ -44,10 +56,7 @@ mod tests {
         e.define("One", Literal::Bool(true));
 
         assert!(e.values.contains_key("One"));
-        assert_eq!(
-            e.values.get("One").unwrap(),
-            &Literal::Bool(true)
-        );
+        assert_eq!(e.values.get("One").unwrap(), &Literal::Bool(true));
     }
 
     #[test]
@@ -55,10 +64,7 @@ mod tests {
         let mut e = Environment::new();
         e.define("Two", Literal::Bool(true));
         e.define("Two", Literal::Number(12.0));
-        assert_eq!(
-            e.values.get("Two").unwrap(),
-            &Literal::Number(12.0)
-        );
+        assert_eq!(e.values.get("Two").unwrap(), &Literal::Number(12.0));
     }
 
     #[test]
@@ -67,7 +73,10 @@ mod tests {
         e.define("Three", Literal::String("foo".to_string()));
 
         let three_tok = Token::new(TokenType::Identifier, "Three".to_string(), None, 0);
-        assert_eq!(e.get(&three_tok).unwrap(), Literal::String("foo".to_string()));
+        assert_eq!(
+            e.get(&three_tok).unwrap(),
+            Literal::String("foo".to_string())
+        );
     }
 
     #[test]
@@ -76,5 +85,19 @@ mod tests {
         let three_tok = Token::new(TokenType::Identifier, "Three".to_string(), None, 0);
         assert!(e.get(&three_tok).is_err());
     }
-}
+    #[test]
+    fn error_when_assigning_to_undefined_variable() {
+        let mut e = Environment::new();
+        let four_tok = Token::new(TokenType::Identifier, "Four".to_string(), None, 0);
+        assert!(e.assign(&four_tok, Literal::Nil).is_err());
+    }
 
+    #[test]
+    fn can_reassign_existing_variable() {
+        let mut e = Environment::new();
+        let four_tok = Token::new(TokenType::Identifier, "Four".to_string(), None, 0);
+        e.define(&"Four".to_string(), Literal::Number(73.1));
+        assert!(e.assign(&four_tok, Literal::Number(89.5)).is_ok());
+        assert_eq!(e.get(&four_tok).unwrap(), Literal::Number(89.5));
+    }
+}
