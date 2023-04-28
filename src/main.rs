@@ -1,8 +1,8 @@
 mod token_type;
 
 // mod ast_printer;
-mod error;
 mod environment;
+mod error;
 mod expr;
 mod interpreter;
 use interpreter::*;
@@ -111,10 +111,9 @@ impl Lox {
 
         let mut parser = Parser::new(tokens);
         let statements = parser.parse()?;
-        if parser.success() && self.interpreter.interpret(&statements) {
-            Ok(())
-        } else {
-            Err(LoxError::error(0, ""))
+        if parser.success() {
+            self.interpreter.interpret(&statements);
         }
+        Ok(())
     }
 }
