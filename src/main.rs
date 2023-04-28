@@ -2,6 +2,7 @@ mod token_type;
 
 // mod ast_printer;
 mod error;
+mod environment;
 mod expr;
 mod interpreter;
 use interpreter::*;
@@ -68,7 +69,7 @@ struct Lox {
 impl Lox {
     pub fn new() -> Lox {
         Lox {
-            interpreter: Interpreter {},
+            interpreter: Interpreter::new(),
         }
     }
 
