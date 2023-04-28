@@ -418,4 +418,41 @@ mod tests {
             Literal::Number(23.0)
         );
     }
+
+    #[test]
+    fn test_var_stmt_undefined() {
+        let terp = Interpreter::new();
+        let name = Token::new(TokenType::Identifier, "foo".to_string(), None, 123);
+        let var_stmt = VarStmt {
+            name: name.dup(),
+            initializer: None,
+        };
+        assert!(terp.visit_var_stmt(&var_stmt).is_ok());
+        assert_eq!(terp.environment.borrow().get(&name).unwrap(), Literal::Nil);
+    }
+
+    #[test]
+    fn test_variable_expr() {
+        let terp = Interpreter::new();
+        let name = Token::new(TokenType::Identifier, "foo".to_string(), None, 123);
+        let var_stmt = VarStmt {
+            name: name.dup(),
+            initializer: Some(*make_literal(Literal::Number(23.0))),
+        };
+        assert!(terp.visit_var_stmt(&var_stmt).is_ok());
+
+        let var_expr = VariableExpr { name: name.dup() };
+        assert_eq!(
+            terp.visit_variable_expr(&var_expr).unwrap(),
+            Literal::Number(23.0)
+        );
+    }
+
+    #[test]
+    fn test_undefined_variable_expr() {
+        let terp = Interpreter::new();
+        let name = Token::new(TokenType::Identifier, "foo".to_string(), None, 123);
+        let var_expr = VariableExpr { name: name.dup() };
+        assert!(terp.visit_variable_expr(&var_expr).is_err());
+    }
 }

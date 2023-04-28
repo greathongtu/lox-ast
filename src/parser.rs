@@ -1,18 +1,23 @@
 use crate::error::*;
 use crate::expr::*;
+use crate::literal::Literal;
 use crate::stmt::*;
 use crate::token::*;
 use crate::token_type::*;
-use crate::literal::Literal;
 
 pub struct Parser<'a> {
     tokens: &'a [Token],
     current: usize,
+    had_error: bool,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: &[Token]) -> Parser {
-        Parser { tokens, current: 0 }
+        Parser {
+            tokens,
+            current: 0,
+            had_error: false,
+        }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
@@ -21,6 +26,10 @@ impl<'a> Parser<'a> {
             statements.push(self.declaration()?);
         }
         Ok(statements)
+    }
+
+    pub fn success(&self) -> bool {
+        !self.had_error
     }
 
     fn expression(&mut self) -> Result<Expr, LoxError> {
@@ -177,9 +186,9 @@ impl<'a> Parser<'a> {
             }));
         }
         if self.is_match(&[TokenType::Identifier]) {
-            return Ok(Expr::Variable(VariableExpr { 
-                name: self.previous().dup()
-             }));
+            return Ok(Expr::Variable(VariableExpr {
+                name: self.previous().dup(),
+            }));
         }
 
         if self.is_match(&[TokenType::LeftParen]) {
@@ -207,11 +216,12 @@ impl<'a> Parser<'a> {
         if self.check(ttype) {
             Ok(self.advance().dup())
         } else {
-            Err(Parser::error(self.peek(), message))
+            Err(self.error(&self.peek().dup(), message))
         }
     }
 
-    fn error(token: &Token, message: &str) -> LoxError {
+    fn error(&mut self, token: &Token, message: &str) -> LoxError {
+        self.had_error = true;
         LoxError::parse_error(token, message)
     }
 
@@ -234,7 +244,7 @@ impl<'a> Parser<'a> {
             ) {
                 return;
             }
-            self.advance(); 
+            self.advance();
         }
     }
 
@@ -246,7 +256,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn advance(&mut self) -> &Token{
+    fn advance(&mut self) -> &Token {
         if !self.is_at_end() {
             self.current += 1;
         }
