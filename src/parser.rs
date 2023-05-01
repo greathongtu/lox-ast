@@ -52,9 +52,13 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
         if self.is_match(&[TokenType::Print]) {
-            self.print_statement()
+            return self.print_statement();
+        } else if self.is_match(&[TokenType::LeftBrace]) {
+            return Ok(Stmt::Block(BlockStmt {
+                statements: self.block()?,
+            }));
         } else {
-            self.expression_statement()
+            return self.expression_statement();
         }
     }
 
@@ -87,6 +91,19 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Expression(ExpressionStmt { expression: value }))
     }
 
+    fn block(&mut self) -> Result<Vec<Stmt>, LoxError> {
+        let mut statements = Vec::new();
+
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
+
+        Ok(statements)
+    }
+
+    // assignment → IDENTIFIER "=" assignment | equality ;
     pub fn assignment(&mut self) -> Result<Expr, LoxError> {
         let expr = self.equality()?;
 

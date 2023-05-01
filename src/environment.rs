@@ -7,9 +7,10 @@ use crate::error::*;
 use crate::literal::*;
 use crate::token::*;
 
+#[derive(Debug)]
 pub struct Environment {
-    values: HashMap<String, Literal>,
-    enclosing: Option<Rc<RefCell<Environment>>>,
+    pub values: HashMap<String, Literal>,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
@@ -33,7 +34,7 @@ impl Environment {
         if let Some(literal) = self.values.get(name.as_string()) {
             Ok(literal.clone())
         } else if let Some(enclosing) = &self.enclosing {
-            enclosing.borrow().get(name)
+        enclosing.borrow().get(name)
         } else {
             Err(LoxError::runtime_error(
                 name,

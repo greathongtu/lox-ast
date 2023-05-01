@@ -1,4 +1,6 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::environment::Environment;
 use crate::error::*;
@@ -9,10 +11,16 @@ use crate::token_type::*;
 
 pub struct Interpreter {
     // RefCell because we want to mutate the environment
-    environment: RefCell<Environment>,
+    // outer RefCell to avoid cyclic reference when replacing self.environment
+    environment: RefCell<Rc<RefCell<Environment>>>,
 }
 
 impl StmtVisitor<()> for Interpreter {
+    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), LoxError> {
+        let e = Environment::new_with_enclosing(self.environment.borrow().clone());
+        self.execute_block(&stmt.statements, e)
+    }
+
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), LoxError> {
         self.evaluate(&stmt.expression)?;
         Ok(())
@@ -31,6 +39,7 @@ impl StmtVisitor<()> for Interpreter {
             Literal::Nil
         };
         self.environment
+            .borrow()
             .borrow_mut()
             .define(&stmt.name.as_string(), value);
         Ok(())
@@ -130,12 +139,13 @@ impl ExprVisitor<Literal> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Literal, LoxError> {
-        return self.environment.borrow().get(&expr.name);
+        return self.environment.borrow().borrow().get(&expr.name);
     }
 
     fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<Literal, LoxError> {
         let value = self.evaluate(&expr.value)?;
         self.environment
+            .borrow()
             .borrow_mut()
             .assign(&expr.name, value.clone())?;
         Ok(value)
@@ -145,7 +155,7 @@ impl ExprVisitor<Literal> for Interpreter {
 impl Interpreter {
     pub fn new() -> Interpreter {
         Interpreter {
-            environment: RefCell::new(Environment::new()),
+            environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
         }
     }
     fn evaluate(&self, expr: &Expr) -> Result<Literal, LoxError> {
@@ -156,7 +166,21 @@ impl Interpreter {
         stmt.accept(self)
     }
 
-    // Lox follows Ruby’s simple rule: false and nil are falsey, and everything else is truthy.··
+    fn execute_block(&self, statements: &[Stmt], environment: Environment) -> Result<(), LoxError> {
+        println!("self.env = {:#?}", self.environment);
+        println!("replaing with = {:#?}", environment);
+        let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
+        println!("new self.env = {:#?}", self.environment);
+        let result = statements
+            .iter()
+            .try_for_each(|statement| self.execute(statement));
+
+        self.environment.replace(previous);
+        "sdf".to_string().replace(from, to)
+        result
+    }
+
+    // Lox follows Ruby’s simple rule: false and nil are falsey, and everything else is truthy
     fn is_truthy(&self, literal: &Literal) -> bool {
         !matches!(literal, Literal::Nil | Literal::Bool(false))
     }
