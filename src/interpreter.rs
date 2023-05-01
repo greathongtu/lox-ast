@@ -25,6 +25,14 @@ impl StmtVisitor<()> for Interpreter {
         Ok(())
     }
 
+    fn visit_while_stmt(&self, stmt: &WhileStmt) -> Result<(), LoxError> {
+        while self.is_truthy(&self.evaluate(&stmt.condition)?) {
+            self.execute(&stmt.body)?;
+        }
+
+        Ok(())
+    }
+
     fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<(), LoxError> {
         if self.is_truthy(&self.evaluate(&stmt.condition)?) {
             self.execute(&stmt.then_branch)
