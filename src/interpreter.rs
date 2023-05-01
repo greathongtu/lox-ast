@@ -472,7 +472,7 @@ mod tests {
         };
         assert!(terp.visit_var_stmt(&var_stmt).is_ok());
         assert_eq!(
-            terp.environment.borrow().get(&name).unwrap(),
+            terp.environment.borrow().borrow().get(&name).unwrap(),
             Literal::Number(23.0)
         );
     }
@@ -486,7 +486,7 @@ mod tests {
             initializer: None,
         };
         assert!(terp.visit_var_stmt(&var_stmt).is_ok());
-        assert_eq!(terp.environment.borrow().get(&name).unwrap(), Literal::Nil);
+        assert_eq!(terp.environment.borrow().borrow().get(&name).unwrap(), Literal::Nil);
     }
 
     #[test]
