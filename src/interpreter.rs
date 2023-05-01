@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::environment::Environment;
@@ -24,6 +23,16 @@ impl StmtVisitor<()> for Interpreter {
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), LoxError> {
         self.evaluate(&stmt.expression)?;
         Ok(())
+    }
+
+    fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<(), LoxError> {
+        if self.is_truthy(&self.evaluate(&stmt.condition)?) {
+            self.execute(&stmt.then_branch)
+        } else if let Some(else_branch) = &stmt.else_branch {
+            self.execute(else_branch)
+        } else {
+            Ok(())
+        }
     }
 
     fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<(), LoxError> {
@@ -167,16 +176,12 @@ impl Interpreter {
     }
 
     fn execute_block(&self, statements: &[Stmt], environment: Environment) -> Result<(), LoxError> {
-        println!("self.env = {:#?}", self.environment);
-        println!("replaing with = {:#?}", environment);
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
-        println!("new self.env = {:#?}", self.environment);
         let result = statements
             .iter()
             .try_for_each(|statement| self.execute(statement));
 
         self.environment.replace(previous);
-        "sdf".to_string().replace(from, to)
         result
     }
 
