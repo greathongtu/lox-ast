@@ -51,6 +51,9 @@ impl<'a> Parser<'a> {
     }
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
+        if self.is_match(&[TokenType::For]) {
+            return self.for_statement();
+        }
         if self.is_match(&[TokenType::If]) {
             return self.if_statement();
         }
@@ -68,6 +71,67 @@ impl<'a> Parser<'a> {
             return self.expression_statement();
         }
     }
+    // forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+    fn for_statement(&mut self) -> Result<Stmt, LoxError> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'for'.")?;
+
+        let initializer = if self.is_match(&[TokenType::SemiColon]) {
+            None
+        } else if self.is_match(&[TokenType::Var]) {
+            Some(self.var_declaration()?)
+        } else {
+            Some(self.expression_statement()?)
+        };
+
+        let condition = if self.check(TokenType::SemiColon) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+
+        self.consume(TokenType::SemiColon, "Expect ';' after loop condition.")?;
+
+        let increment = if self.check(TokenType::RightParen) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+
+        self.consume(TokenType::RightParen, "Expect ')' after for clauses.")?;
+
+        let mut body = self.statement()?;
+
+        // begin to desugar
+
+        // increment clause
+        if let Some(incr) = increment {
+            body = Stmt::Block(BlockStmt {
+                statements: vec![body, Stmt::Expression(ExpressionStmt { expression: incr })],
+            });
+        }
+
+        // replacing body with a block that contains the original body followed by an expression statement that evaluates the increment.
+        body = Stmt::While(WhileStmt {
+            condition: if let Some(cond) = condition {
+                cond
+            } else {
+                Expr::Literal(LiteralExpr {
+                    value: Some(Literal::Bool(true)),
+                })
+            },
+            body: Box::new(body),
+        });
+
+        // have initializer
+        if let Some(init) = initializer {
+            body = Stmt::Block(BlockStmt {
+                statements: vec![init, body],
+            });
+        }
+
+        Ok(body)
+    }
+
     fn if_statement(&mut self) -> Result<Stmt, LoxError> {
         self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
         let condition = self.expression()?;
@@ -300,8 +364,8 @@ impl<'a> Parser<'a> {
                 expression: Box::new(expr),
             }));
         }
-
-        Err(LoxError::error(0, "failed primary parser"))
+        let peek = self.peek().dup();
+        Err(LoxError::parse_error(&peek, "Expect expression."))
     }
 
     fn is_match(&mut self, ttypes: &[TokenType]) -> bool {
