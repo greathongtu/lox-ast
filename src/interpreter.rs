@@ -61,6 +61,20 @@ impl ExprVisitor<Literal> for Interpreter {
         Ok(expr.value.clone().unwrap())
     }
 
+    fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<Literal, LoxError> {
+        let left = self.evaluate(&expr.left)?;
+
+        if expr.operator.is(TokenType::Or) {
+            if self.is_truthy(&left) {
+                return Ok(left);
+            }
+        } else if !self.is_truthy(&left) {
+            return Ok(left);
+        }
+
+        self.evaluate(&expr.right)
+    }
+
     fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<Literal, LoxError> {
         self.evaluate(&expr.expression)
     }
