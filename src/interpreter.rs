@@ -87,6 +87,24 @@ impl ExprVisitor<Literal> for Interpreter {
         Ok(expr.value.clone().unwrap())
     }
 
+    fn visit_call_expr(&self, expr: &CallExpr) -> Result<Literal, LoxResult> {
+        let callee = self.evaluate(&expr.callee)?;
+
+        let mut arguments = Vec::new();
+        for argument in &expr.arguments {
+            arguments.push(self.evaluate(argument)?);
+        }
+
+        if let Literal::Func(function) = callee {
+            function.call(self, arguments)
+        } else {
+            Err(LoxResult::runtime_error(
+                &expr.paren,
+                "Can only call functions and classes",
+            ))
+        }
+    }
+
     fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<Literal, LoxResult> {
         let left = self.evaluate(&expr.left)?;
 
