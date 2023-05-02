@@ -147,8 +147,11 @@ impl Scanner {
             self.advance();
         }
         let text = self.source[self.start..self.current].to_string();
-        let token_type = (*self.keywords.get(&text).unwrap_or(&TokenType::Identifier)).clone();
-        self.add_token(token_type);
+        if let Some(ttype) = Scanner::keyword(text.as_str()) {
+            self.add_token(ttype);
+        } else {
+            self.add_token(TokenType::Identifier);
+        }
     }
 
     fn scan_number(&mut self) {
@@ -247,5 +250,28 @@ impl Scanner {
             .collect();
         self.tokens
             .push(Token::new(token_type, lexeme, literal, self.line));
+    }
+
+    fn keyword(check: &str) -> Option<TokenType> {
+        match check {
+            "and" => Some(TokenType::And),
+            "class" => Some(TokenType::Class),
+            "else" => Some(TokenType::Else),
+            "false" => Some(TokenType::False),
+            "for" => Some(TokenType::For),
+            "fun" => Some(TokenType::Fun),
+            "if" => Some(TokenType::If),
+            "nil" => Some(TokenType::Nil),
+            "or" => Some(TokenType::Or),
+            "print" => Some(TokenType::Print),
+            "return" => Some(TokenType::Return),
+            "super" => Some(TokenType::Super),
+            "this" => Some(TokenType::This),
+            "true" => Some(TokenType::True),
+            "var" => Some(TokenType::Var),
+            "while" => Some(TokenType::While),
+            "break" => Some(TokenType::Break),
+            _ => None,
+        }
     }
 }

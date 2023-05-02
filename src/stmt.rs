@@ -4,6 +4,7 @@ use crate::token::*;
 
 pub enum Stmt {
     Block(BlockStmt),
+    Break(BreakStmt),
     Expression(ExpressionStmt),
     If(IfStmt),
     Print(PrintStmt),
@@ -15,6 +16,7 @@ impl Stmt {
     pub fn accept<T>(&self, stmt_visitor: &dyn StmtVisitor<T>) -> Result<T, LoxResult> {
         match self {
             Stmt::Block(v) => v.accept(stmt_visitor),
+            Stmt::Break(v) => v.accept(stmt_visitor),
             Stmt::Expression(v) => v.accept(stmt_visitor),
             Stmt::If(v) => v.accept(stmt_visitor),
             Stmt::Print(v) => v.accept(stmt_visitor),
@@ -26,6 +28,10 @@ impl Stmt {
 
 pub struct BlockStmt {
     pub statements: Vec<Stmt>,
+}
+
+pub struct BreakStmt {
+    pub token: Token,
 }
 
 pub struct ExpressionStmt {
@@ -54,6 +60,7 @@ pub struct WhileStmt {
 
 pub trait StmtVisitor<T> {
     fn visit_block_stmt(&self, expr: &BlockStmt) -> Result<T, LoxResult>;
+    fn visit_break_stmt(&self, expr: &BreakStmt) -> Result<T, LoxResult>;
     fn visit_expression_stmt(&self, expr: &ExpressionStmt) -> Result<T, LoxResult>;
     fn visit_if_stmt(&self, expr: &IfStmt) -> Result<T, LoxResult>;
     fn visit_print_stmt(&self, expr: &PrintStmt) -> Result<T, LoxResult>;
@@ -64,6 +71,12 @@ pub trait StmtVisitor<T> {
 impl BlockStmt {
     pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, LoxResult> {
         visitor.visit_block_stmt(self)
+    }
+}
+
+impl BreakStmt {
+    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, LoxResult> {
+        visitor.visit_break_stmt(self)
     }
 }
 

@@ -12,23 +12,31 @@ pub struct Interpreter {
     // RefCell because we want to mutate the environment
     // outer RefCell to avoid cyclic reference when replacing self.environment
     environment: RefCell<Rc<RefCell<Environment>>>,
+    nest: RefCell<usize>,
 }
 
 impl StmtVisitor<()> for Interpreter {
-    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), LoxResult> {
-        let e = Environment::new_with_enclosing(self.environment.borrow().clone());
-        self.execute_block(&stmt.statements, e)
-    }
-
-    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), LoxResult> {
-        self.evaluate(&stmt.expression)?;
-        Ok(())
+    fn visit_break_stmt(&self, stmt: &BreakStmt) -> Result<(), LoxResult> {
+        if *self.nest.borrow() == 0 {
+            Err(LoxResult::runtime_error(
+                &stmt.token,
+                "break outside of while/for loop",
+            ))
+        } else {
+            Err(LoxResult::Break)
+        }
     }
 
     fn visit_while_stmt(&self, stmt: &WhileStmt) -> Result<(), LoxResult> {
+        *self.nest.borrow_mut() += 1;
         while self.is_truthy(&self.evaluate(&stmt.condition)?) {
-            self.execute(&stmt.body)?;
+            match self.execute(&stmt.body) {
+                Err(LoxResult::Break) => break,
+                Err(e) => return Err(e),
+                Ok(_) => {}
+            }
         }
+        *self.nest.borrow_mut() -= 1;
 
         Ok(())
     }
@@ -41,6 +49,16 @@ impl StmtVisitor<()> for Interpreter {
         } else {
             Ok(())
         }
+    }
+
+    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), LoxResult> {
+        let e = Environment::new_with_enclosing(self.environment.borrow().clone());
+        self.execute_block(&stmt.statements, e)
+    }
+
+    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), LoxResult> {
+        self.evaluate(&stmt.expression)?;
+        Ok(())
     }
 
     fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<(), LoxResult> {
@@ -187,6 +205,7 @@ impl Interpreter {
     pub fn new() -> Interpreter {
         Interpreter {
             environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
+            nest: RefCell::new(0),
         }
     }
     fn evaluate(&self, expr: &Expr) -> Result<Literal, LoxResult> {
@@ -197,7 +216,11 @@ impl Interpreter {
         stmt.accept(self)
     }
 
-    fn execute_block(&self, statements: &[Stmt], environment: Environment) -> Result<(), LoxResult> {
+    fn execute_block(
+        &self,
+        statements: &[Stmt],
+        environment: Environment,
+    ) -> Result<(), LoxResult> {
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         let result = statements
             .iter()
@@ -214,6 +237,7 @@ impl Interpreter {
 
     pub fn interpret(&self, statements: &[Stmt]) -> bool {
         let mut success = true;
+        *self.nest.borrow_mut() = 0;
         for statement in statements {
             if self.execute(statement).is_err() {
                 success = false;
@@ -486,7 +510,10 @@ mod tests {
             initializer: None,
         };
         assert!(terp.visit_var_stmt(&var_stmt).is_ok());
-        assert_eq!(terp.environment.borrow().borrow().get(&name).unwrap(), Literal::Nil);
+        assert_eq!(
+            terp.environment.borrow().borrow().get(&name).unwrap(),
+            Literal::Nil
+        );
     }
 
     #[test]
