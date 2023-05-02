@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::error::LoxError;
+use crate::error::*;
 use crate::literal::Literal;
 use crate::token::*;
 use crate::token_type::*;
@@ -45,14 +45,14 @@ impl Scanner {
             },
         }
     }
-    pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, LoxError> {
-        let mut had_error: Option<LoxError> = None;
+
+    pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, LoxResult> {
+        let mut had_error: Option<LoxResult> = None;
         while !self.is_at_end() {
             self.start = self.current;
             match self.scan_token() {
                 Ok(_) => {}
                 Err(e) => {
-                    e.report("");
                     had_error = Some(e);
                 }
             }
@@ -71,7 +71,7 @@ impl Scanner {
         self.current >= self.source.len()
     }
 
-    fn scan_token(&mut self) -> Result<(), LoxError> {
+    fn scan_token(&mut self) -> Result<(), LoxResult> {
         let c = self.advance();
         match c {
             '(' => self.add_token(TokenType::LeftParen),
@@ -135,7 +135,7 @@ impl Scanner {
                 } else if self.is_alpha(c) {
                     self.identifier();
                 } else {
-                    return Err(LoxError::error(self.line, "Unexpected character."));
+                    return Err(LoxResult::error(self.line, "Unexpected character."));
                 }
             }
         }
@@ -180,7 +180,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            LoxError::error(self.line, "Unterminated string.");
+            LoxResult::error(self.line, "Unterminated string.");
             return;
         }
 

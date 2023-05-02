@@ -105,7 +105,7 @@ impl Lox {
         }
     }
 
-    fn run(&self, source: String) -> Result<(), LoxError> {
+    fn run(&self, source: String) -> Result<(), LoxResult> {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens()?;
 
