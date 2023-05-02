@@ -1,5 +1,7 @@
-use std::fmt;
 use std::cmp::*;
+use std::fmt;
+
+use crate::callable::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
@@ -21,18 +23,5 @@ impl fmt::Display for Literal {
             Literal::String(s) => write!(f, "{}", s),
             Literal::ArithmeticError => panic!("Should not be trying to print ArithmeticError"),
         }
-    }
-}
-
-
-use crate::error::*;
-use crate::interpreter::*;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Callable;
-
-impl Callable {
-    pub fn call(&self, _terp: &Interpreter, _arguments: Vec<Literal>) -> Result<Literal, LoxResult> {
-        Ok(Literal::Nil)
     }
 }
