@@ -6,6 +6,7 @@ mod environment;
 mod error;
 mod expr;
 mod interpreter;
+mod native_functions;
 use interpreter::*;
 mod literal;
 mod scanner;

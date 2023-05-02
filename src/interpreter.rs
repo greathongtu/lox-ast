@@ -1,14 +1,17 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::callable::*;
 use crate::environment::Environment;
 use crate::error::*;
 use crate::expr::*;
 use crate::literal::*;
+use crate::native_functions::*;
 use crate::stmt::*;
 use crate::token_type::*;
 
 pub struct Interpreter {
+    globals: Rc<RefCell<Environment>>,
     // RefCell because we want to mutate the environment
     // outer RefCell to avoid cyclic reference when replacing self.environment
     environment: RefCell<Rc<RefCell<Environment>>>,
@@ -231,11 +234,22 @@ impl ExprVisitor<Literal> for Interpreter {
 
 impl Interpreter {
     pub fn new() -> Interpreter {
+        let globals = Rc::new(RefCell::new(Environment::new()));
+
+        globals.borrow_mut().define(
+            "clock",
+            Literal::Func(Callable {
+                func: Rc::new(NativeClock {}),
+            }),
+        );
+
         Interpreter {
-            environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
+            globals: Rc::clone(&globals),
+            environment: RefCell::new(Rc::clone(&globals)),
             nest: RefCell::new(0),
         }
     }
+
     fn evaluate(&self, expr: &Expr) -> Result<Literal, LoxResult> {
         expr.accept(self)
     }

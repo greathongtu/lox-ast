@@ -10,7 +10,6 @@ use crate::literal::*;
 #[derive(Clone)]
 pub struct Callable {
     pub func: Rc<dyn LoxCallable>,
-    arity: usize,
 }
 
 impl Debug for Callable {
@@ -26,16 +25,24 @@ impl PartialEq for Callable {
 }
 
 pub trait LoxCallable {
-    fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Result<Literal, LoxResult>;
+    fn call(
+        &self,
+        interpreter: &Interpreter,
+        arguments: Vec<Literal>,
+    ) -> Result<Literal, LoxResult>;
     fn arity(&self) -> usize;
 }
 
 impl LoxCallable for Callable {
-    fn call(&self, interpreter: &Interpreter, arguments: Vec<Literal>) -> Result<Literal, LoxResult> {
+    fn call(
+        &self,
+        interpreter: &Interpreter,
+        arguments: Vec<Literal>,
+    ) -> Result<Literal, LoxResult> {
         self.func.call(interpreter, arguments)
     }
 
     fn arity(&self) -> usize {
-        self.arity
+        self.func.arity()
     }
 }
